@@ -1,0 +1,147 @@
+import mongoose from "mongoose"
+import { IChat, IChatWithParticipants } from "../Entities/IChat"
+import IUsers from "../Entities/IUser"
+import Chats from "../Frameworks/Models/ChatModel"
+import Users from "../Frameworks/Models/usersModel"
+import { hashPassword } from "../Frameworks/Utils/hashedPassword"
+
+export class UserRepository{
+    async createUser(name: string, email: string, password: string, mobile: number): Promise<IUsers> {
+        const hashingPassword = await hashPassword(password)
+        const user = new Users({ name, email, password: hashingPassword, mobile })
+        return await user.save()
+    }
+
+    async findUserEmail(email: string): Promise<IUsers | null> {
+        return await Users.findOne({ email })
+    }
+
+
+
+    private commonAggratePiplineForChat(currentUserId: string) {
+        return [
+            {
+                $lookup: {
+                  from: 'messages', 
+                  localField: 'chatId', 
+                  foreignField: 'chatId', 
+                  as: 'messages'
+                }
+              }, 
+              {
+                $addFields: {
+                  messages: {
+                    $filter: {
+                      input: '$messages', 
+                      as: 'message', 
+                      cond: {
+                        $and: [
+                          {
+                            $eq: [
+                              '$$message.isRead', false
+                            ]
+                          }, 
+                          {
+                            $ne: [
+                              '$$message.senderId', new mongoose.Types.ObjectId(currentUserId)
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+            }, 
+            {
+                $addFields: {
+                  unReadMessages: {
+                    $size: '$messages'
+                  }
+                }
+            }, 
+            {
+                $project: {
+                  messages: 0
+                }
+            },
+            {
+                $lookup: {
+                  from: 'users', 
+                  localField: 'participants', 
+                  foreignField: '_id', 
+                  as: 'participantsData'
+                }
+            },
+            {
+                $project: {
+                    "participantsData.password": 0
+                }
+            },
+            {
+                $lookup: {
+                    from: 'messages', 
+                    localField: 'lastMessage', 
+                    foreignField: '_id', 
+                    as: 'lastMessageData'
+                }
+            }, 
+            {
+                $unwind: {
+                    path: '$lastMessageData',
+                    preserveNullAndEmptyArrays: true
+                }
+            }
+        ]
+    }
+
+    async createChat(senderId: string, receiverId: string, type: 'one-to-one' | 'group'): Promise<IChat> {
+        const newChat = new Chats({
+          participants: [senderId, receiverId],
+          type,
+          createdAt: new Date()
+        });
+        return await newChat.save();
+      }
+    
+      async findOneByParticipants(senderId: string, receiverId: string): Promise<IChat | null> {
+        return await Chats.findOne({
+          participants: { $all: [senderId, receiverId] },
+          type: 'one-to-one'
+        });
+      }
+
+      async getAllChatsOfCurrentUser(_id: string): Promise<IChatWithParticipants[] | never> {
+        try {
+            const chat: IChatWithParticipants[] = await Chats.aggregate([
+                {
+                    $match: {
+                        participants: { $elemMatch: { $eq: new mongoose.Types.ObjectId(_id) } },
+                        $or: [
+                            {
+                                type: 'group'
+                            }, 
+                            {
+                                $and: [
+                                    {
+                                        type: 'one-to-one'
+                                    }, 
+                                    {
+                                        lastMessage: {
+                                            $ne: null
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                ...this.commonAggratePiplineForChat(_id)
+            ]).sort({ updatedAt: -1 });
+
+            return chat;
+        } catch (err: any) {
+            throw err;
+        }
+    }
+      
+}
