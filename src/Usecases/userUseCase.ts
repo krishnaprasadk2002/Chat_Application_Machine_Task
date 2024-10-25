@@ -76,4 +76,8 @@ async getAllChatsOfCurrentUser(userId: string): Promise<IChatWithParticipants[]>
   
   return chats;
 }
+
+async getAllUsers(userId:string) {
+  return await this.userRep.getAllUsers(userId);
+}
 }

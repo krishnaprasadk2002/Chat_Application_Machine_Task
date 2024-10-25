@@ -39,21 +39,15 @@ export function ConnectSocket(httpServer: http.Server) {
                 console.error('No cookies found');
                 return next(new CustomError(HttpStatusCode.UNAUTHORIZED, 'No cookies found'));
             }
-            const { accessToken } = parse(rawCookie);
-
-            console.log( parse(rawCookie));
+            const { Token } = parse(rawCookie);
             
             
-            if (!accessToken) {
+            if (!Token) {
                 throw new CustomError(HttpStatusCode.UNAUTHORIZED, 'User is not authenticated: No token found.');
             }
     
-            // Verify the token
-            console.log(accessToken,"here is");
             
-            const decoded: IPayload = jwtService.verifyToken(accessToken);
-            console.log("b");
-            console.log(decoded, "hy");
+            const decoded: IPayload = jwtService.verifyToken(Token);
             
             if (!decoded || !isObjectIdOrHexString(decoded.userId)) {
                 console.error('Decoded token is invalid or ID is not a valid ObjectId');

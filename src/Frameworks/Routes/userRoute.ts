@@ -2,16 +2,21 @@ import { UserController } from "../../Controllers/userController";
 import { UserRepository } from "../../Repositories/userRepository";
 import { UserUseCase } from "../../Usecases/userUseCase";
 import express from 'express';
+import { authenticateToken } from "../Middlewares/accessToken";
+import cookieParser from "cookie-parser";
+
 
 
 const userRepository = new UserRepository();
 const userUseCase = new UserUseCase(userRepository);
 const userController = new UserController(userUseCase);
 
-const userRoute = express()
+const userRoute = express.Router();
 
 userRoute.post('/register',(req,res)=>{userController.userSignUp(req,res)})
 userRoute.post('/login', (req, res) => {userController.userLogin(req, res)});
-
+userRoute.get('/allusers',authenticateToken, async (req, res) => {
+    await userController.getALlUsers(req, res);
+});
 
 export default userRoute

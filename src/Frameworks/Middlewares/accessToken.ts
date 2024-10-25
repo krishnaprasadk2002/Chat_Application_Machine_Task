@@ -1,38 +1,33 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from 'jsonwebtoken';
-import { HttpStatusCode } from "../../Enum/httpStatusCode";
 
-export interface AuthenticatedRequest extends Request {
-    user?: DecodedUser;
+export interface authenticatedRequest extends Request {
+    user?: decodedUser;
 }
 
-export interface DecodedUser {
+export interface decodedUser {
     userId: string;
     email: string;
     iat: number;
     exp: number;
 }
 
-export const authenticateToken = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    const token = req.cookies.token;
+export const authenticateToken = (req: authenticatedRequest, res: Response, next: NextFunction): void => {
+    const token = req.cookies.Token; 
 
     if (!token) {
-        return res.status(HttpStatusCode.UNAUTHORIZED).json({ message: 'Unauthorized: No token provided' });
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
     }
 
     try {
-        // Verify the token and decode the payload
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'chat-app') as DecodedUser;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'token') as decodedUser;
         req.user = decoded;
+        console.log(req.user,'decodes');
+        
         next();
-    } catch (error: any) {
-        // Differentiate between token errors
-        if (error.name === 'TokenExpiredError') {
-            return res.status(HttpStatusCode.UNAUTHORIZED).json({ message: 'Token expired. Please log in again.' });
-        } else if (error.name === 'JsonWebTokenError') {
-            return res.status(HttpStatusCode.FORBIDDEN).json({ message: 'Invalid token. Access forbidden.' });
-        } else {
-            return res.status(HttpStatusCode.FORBIDDEN).json({ message: 'Forbidden: Token validation failed' });
-        }
+    } catch (error) {
+        console.error('JWT verification error:', error);
+        res.status(403).json({ message: 'Forbidden' });
     }
 };

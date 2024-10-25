@@ -143,5 +143,13 @@ export class UserRepository{
             throw err;
         }
     }
+
+    async getAllUsers(userId:string) {
+      try {
+        return await Users.find({ _id: { $ne: userId } }); 
+      } catch (error) {
+        throw new Error('Error fetching users: ' + error);
+      }
+    }
+  }
       
-}

@@ -8,7 +8,6 @@ import { ConnectSocket } from "./src/Frameworks/Utils/connectSocket";
 connectDB();
 
 dotenv.config()
-console.log('Frontend URL:', process.env.FRONTEND_URL);
 
 
 const {emitSocketEvent,isReciverInChat}=ConnectSocket(httpServer) // socket configuration and event listn initailazation

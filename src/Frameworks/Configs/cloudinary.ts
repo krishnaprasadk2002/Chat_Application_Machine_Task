@@ -14,7 +14,7 @@ async function uploadCloudinary(filePath: string) {
              resource_type: 'auto'
             
         });
-        console.log(result);
+        
         
         return result.secure_url;
     } catch (error) {
