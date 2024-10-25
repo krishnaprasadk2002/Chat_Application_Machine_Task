@@ -151,5 +151,20 @@ export class UserRepository{
         throw new Error('Error fetching users: ' + error);
       }
     }
+
+    async findReceiverById(receiverId: string) {
+      try {
+        const receiver = await Users.findOne({_id:receiverId});
+    
+        if (!receiver) {
+          throw new Error('User not found');
+        }
+        return receiver; 
+      } catch (error) {
+        console.error('Error finding user by ID:', error);
+        throw error; 
+      }
+    }
+    
   }
       

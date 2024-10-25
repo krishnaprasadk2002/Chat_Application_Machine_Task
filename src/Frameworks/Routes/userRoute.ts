@@ -18,5 +18,9 @@ userRoute.post('/login', (req, res) => {userController.userLogin(req, res)});
 userRoute.get('/allusers',authenticateToken, async (req, res) => {
     await userController.getALlUsers(req, res);
 });
+userRoute.get('/getuserid',authenticateToken, async (req, res) => {
+    await userController.getUserId(req, res);
+});
+userRoute.get('/receiverData', (req, res) => {userController.receiverData(req, res)});
 
 export default userRoute

@@ -80,4 +80,8 @@ async getAllChatsOfCurrentUser(userId: string): Promise<IChatWithParticipants[]>
 async getAllUsers(userId:string) {
   return await this.userRep.getAllUsers(userId);
 }
+
+async receiverData(receiverId:string){
+  return await this.userRep.findReceiverById(receiverId)
+}
 }

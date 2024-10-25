@@ -165,7 +165,6 @@ export class UserController {
         }
 
         const data: IUsers[] = await this.userUseCase.getAllUsers(userId);
-        console.log(data,'users data');
         
         return res.status(HttpStatusCode.OK).json({
             success: true,
@@ -180,5 +179,52 @@ export class UserController {
         });
     }
 }
+
+async getUserId(req:authenticatedRequest,res:Response):Promise<Response>{
+  const userId = req.user?.userId;
+
+  if (!userId) {
+    return res.status(HttpStatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: 'User not authenticated',
+    });
+}
+
+return res.status(HttpStatusCode.OK).json({
+  success: true,
+  message: 'UserId fetched',
+  userId:userId
+})
+}
+
+
+async receiverData(req: Request, res: Response): Promise<Response> {
+  const receiverId = req.query.userId as string;
+
+  if (!receiverId) {
+    return res.status(HttpStatusCode.BAD_REQUEST).json({
+      success: false,
+      message: 'User ID is required',
+    });
+  }
+
+  console.log('receiverId:', receiverId);
+
+  return this.userUseCase.receiverData(receiverId).then((data: IUsers) => {
+    console.log(data,'receiverData');
+    return res.status(HttpStatusCode.OK).json({
+      success: true,
+      message: 'User data fetched',
+      data,
+    });
+  }).catch((error: any) => {
+    console.error('Error fetching receiver data:', error);
+    return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Error fetching user data',
+    });
+  });
+}
+
   
 }
