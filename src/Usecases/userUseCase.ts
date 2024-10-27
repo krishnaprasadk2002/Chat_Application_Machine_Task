@@ -1,10 +1,9 @@
 import { UserRepository } from "../Repositories/userRepository";
-import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-
 import { config } from "dotenv";
 import { IChatWithParticipants } from "../Entities/IChat";
 import { IMessage } from "../Entities/IMessage";
+
 
 config();
 
@@ -35,30 +34,31 @@ export class UserUseCase {
 
   async createNewChat(senderId: string, receiverId: string): Promise<IChatWithParticipants> {
     try {
+      
+
         const existingChat = await this.userRep.findOneByParticipants(senderId, receiverId);
+        
         if (existingChat) {
-            const chatWithParticipants: IChatWithParticipants = {
+            return {
                 ...existingChat,
                 lastMessage: '',
                 participantsData: [], 
                 lastMessageData: null as unknown as IMessage, 
                 unReadMessages: 0,
             };
-            return chatWithParticipants;
         }
 
         // Create a new chat if it doesn't exist
-        const newChat = await this.userRep.createChat(senderId, receiverId, 'one-to-one');
+        const newChat = await this.userRep.createChat(senderId, receiverId, 'one-to-one')
+        
 
-        const chatWithParticipants: IChatWithParticipants = {
+        return {
             ...newChat,
             lastMessage: '',
             participantsData: [], 
             lastMessageData: null as unknown as IMessage, 
             unReadMessages: 0,
         };
-
-        return chatWithParticipants;
     } catch (error) {
         console.error('Error creating new chat:', error);
         throw new Error('Failed to create new chat'); 
@@ -84,4 +84,15 @@ async getAllUsers(userId:string) {
 async receiverData(receiverId:string){
   return await this.userRep.findReceiverById(receiverId)
 }
+
+  // Send a message
+  async sendMessage(messageData: IMessage): Promise<IMessage> {
+    return await this.userRep.createMessage(messageData);
+  }
+
+  // Fetch messages for a chat
+  async fetchMessages(chatId: string): Promise<IMessage[]> {
+    return await this.userRep.getMessagesByChatId(chatId);
+  }
+
 }

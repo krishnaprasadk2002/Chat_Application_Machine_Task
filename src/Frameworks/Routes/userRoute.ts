@@ -23,4 +23,9 @@ userRoute.get('/getuserid',authenticateToken, async (req, res) => {
 });
 userRoute.get('/receiverData', (req, res) => {userController.receiverData(req, res)});
 
+userRoute.post("/createnewchat", authenticateToken, (req, res) => userController.createNewChat(req, res));
+
+
+
+
 export default userRoute

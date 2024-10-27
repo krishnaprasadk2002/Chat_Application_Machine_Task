@@ -1,3 +1,4 @@
+import { Socket } from "socket.io";
 import { IChatWithParticipants } from "../Entities/IChat";
 import IUsers from "../Entities/IUser";
 import { HttpStatusCode } from "../Enum/httpStatusCode";
@@ -5,6 +6,7 @@ import { authenticatedRequest, authenticateToken } from "../Frameworks/Middlewar
 import { UserUseCase } from "../Usecases/userUseCase";
 import { NextFunction, Request, Response } from "express";
 import Jwt from "jsonwebtoken";
+import { IMessage } from "../Entities/IMessage";
 
 export class UserController {
   constructor(private userUseCase: UserUseCase) { }
@@ -85,44 +87,65 @@ export class UserController {
 
 //Creating chat
 
-  async createNewChat(req: authenticatedRequest, res: Response, next: NextFunction): Promise<Response> {
-    try {
-      const senderId: string | undefined = req.user?.userId;
-      const reciverId: string | undefined = req.body.reciverId;
-  
-      // Check if senderId and reciverId are valid
-      if (!senderId || !reciverId) {
-        return res.status(HttpStatusCode.BAD_REQUEST).json({
-          success: false,
-          message: "Sender or receiver ID is missing",
-        });
-      }
-  
-      // Ensure sender is not creating a chat with themselves
-      if (senderId === reciverId) {
-        return res.status(HttpStatusCode.BAD_REQUEST).json({
-          success: false,
-          message: "You cannot start a chat with yourself",
-        });
-      }
-  
-      // Call use case to create the chat
-      const chat: IChatWithParticipants = await this.userUseCase.createNewChat(senderId, reciverId);
-  
-      return res.status(HttpStatusCode.OK).json({
-        success: true,
-        message: "Chat created successfully",
-        data: chat,
-      });
-    } catch (error) {
-      console.error('Error creating new chat:', error);
-      return res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
+async createNewChat(req: authenticatedRequest, res: Response): Promise<void> {
+  try {
+    const senderId: string | undefined = req.user?.userId;
+    const  receiverId  = req.body.reciverId
+
+    if (!senderId || !receiverId) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({
         success: false,
-        message: 'Server error',
+        message: "Sender or receiver ID is missing",
       });
+      return; 
     }
+
+    if (senderId === receiverId) {
+      res.status(HttpStatusCode.BAD_REQUEST).json({
+        success: false,
+        message: "You cannot start a chat with yourself",
+      });
+      return; 
+    }
+
+    const chat: IChatWithParticipants = await this.userUseCase.createNewChat(senderId, receiverId);
+
+    res.status(HttpStatusCode.OK).json({
+      success: true,
+      message: "Chat created successfully",
+      data: chat,
+    });
+  } catch (error) {
+    console.error('Error creating new chat:', error);
+    res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Server error',
+    });
   }
-  
+}
+
+
+ // Send a message and broadcast it
+ async handleSendMessage(socket: Socket, messageData: IMessage) {
+  try {
+    console.log(messageData,'message');
+      const message = await this.userUseCase.sendMessage(messageData);
+      socket.broadcast.to(message.chatId).emit('messageReceived', message);
+  } catch (error) {
+      console.error('Error sending message:', error);
+  }
+}
+
+// Fetch messages for a given chat
+async handleFetchMessages(socket: Socket, chatId: string) {
+  try {
+      const messages = await this.userUseCase.fetchMessages(chatId);
+      
+      socket.emit('messagesFetched', messages);
+  } catch (error) {
+      console.error('Error fetching messages:', error);
+  }
+}
 
   // Get all Chat of specific user
   
@@ -208,10 +231,7 @@ async receiverData(req: Request, res: Response): Promise<Response> {
     });
   }
 
-  console.log('receiverId:', receiverId);
-
   return this.userUseCase.receiverData(receiverId).then((data: IUsers) => {
-    console.log(data,'receiverData');
     return res.status(HttpStatusCode.OK).json({
       success: true,
       message: 'User data fetched',

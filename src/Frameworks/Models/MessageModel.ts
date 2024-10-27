@@ -1,3 +1,4 @@
+// models/messageModel.ts
 import mongoose, { Schema } from "mongoose";
 import { IMessage } from "../../Entities/IMessage";
 
@@ -5,21 +6,23 @@ const MessageSchema: Schema = new Schema(
     {
         chatId: { 
             type: Schema.Types.ObjectId, 
+            ref: 'Chat', 
             required: true 
         },
         senderId: { 
             type: Schema.Types.ObjectId, 
+            ref: 'User', 
             required: true 
         },
-        content: { 
-            type: String
+        message: { 
+            type: String,
         },
         file: {
             key: {
-                type: String
+                type: String,
             },
             url: {
-                type: String
+                type: String,
             }
         },
         type: { 
@@ -31,10 +34,6 @@ const MessageSchema: Schema = new Schema(
             type: Boolean,
             default: false,
             required: true 
-        },
-        createdAt: { 
-            type: Date,
-            required: true
         }
     },
     { 
@@ -43,5 +42,4 @@ const MessageSchema: Schema = new Schema(
 );
 
 const Messages = mongoose.model<IMessage>('Messages', MessageSchema);
-
 export default Messages;

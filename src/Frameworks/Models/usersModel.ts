@@ -9,7 +9,10 @@ const UsersSchema: Schema = new Schema({
     imageUrl: { type: String },
     status: { type: Boolean, default: false },
     refreshToken: { type: String },
-    expiresAt: { type: Date }
+    expiresAt: { type: Date },
+  },
+  {
+    timestamps: true,
   });
   
   const Users = mongoose.model<IUsers>('Users', UsersSchema);

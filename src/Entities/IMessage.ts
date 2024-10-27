@@ -5,7 +5,7 @@ export interface IMessage {
     _id: string;
     chatId: string;
     senderId: string;
-    content?: string;
+    message?: string;
     file?: {
         key: string,
         url: string
@@ -13,6 +13,7 @@ export interface IMessage {
     type: "text" | "image" | "video" | "document";
     isRead: boolean;
     createdAt: Date;
+    updatedAt?: Date;
 }
 
 export interface IMessageWithSenderDetails extends IMessage {

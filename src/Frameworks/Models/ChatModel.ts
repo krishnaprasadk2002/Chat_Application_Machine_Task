@@ -1,6 +1,5 @@
+// models/chatModel.ts
 import mongoose, { Schema } from "mongoose";
-
-// interfaces
 import { IChat } from "../../Entities/IChat";
 
 const ChatSchema: Schema = new Schema(
@@ -13,6 +12,7 @@ const ChatSchema: Schema = new Schema(
         participants: [
             { 
                 type: Schema.Types.ObjectId, 
+                ref: "User", 
                 required: true 
             }
         ],
@@ -36,11 +36,11 @@ const ChatSchema: Schema = new Schema(
             type: Schema.Types.ObjectId,
             ref: "Messages",
             default: null,
-          },
-          groupAdmin: {
+        },
+        groupAdmin: {
             type: Schema.Types.ObjectId,
-            ref: "Users", 
-          },
+            ref: "User", 
+        },
         createdAt: { 
             type: Date,
             required: true
@@ -51,6 +51,6 @@ const ChatSchema: Schema = new Schema(
     }
 );
 
-const Chats = mongoose.model<IChat>("Chats", ChatSchema);
-
-export default Chats;
+// Register the model with Mongoose
+const Chat = mongoose.model<IChat>("Chat", ChatSchema); 
+export default Chat;

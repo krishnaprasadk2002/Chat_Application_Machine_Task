@@ -7,6 +7,10 @@ import { ChatEnum } from "../../constants/socketEvents";
 import { HttpStatusCode } from "../../Enum/httpStatusCode";
 import jwtService from "../Configs/JWTservices";
 import { isObjectIdOrHexString } from "mongoose";
+import { IMessage } from "../../Entities/IMessage";
+import { UserRepository } from "../../Repositories/userRepository";
+import { UserUseCase } from "../../Usecases/userUseCase";
+import { UserController } from "../../Controllers/userController";
 
 class CustomError extends Error {
     constructor(public statusCode: number, message: string) {
@@ -62,15 +66,40 @@ export function ConnectSocket(httpServer: http.Server) {
             next(error);
         }
     });
-    
-    io.on(ChatEnum.CONNECTION,async (socket:IAuthSocket)=>{
-        console.log("socket connected");
-        
-        socket.on('error', (err) => {
-            console.error('Socket error:', err);
-        });
-        socket.join(socket.userId!)
 
+    const userRepository = new UserRepository();
+const userUseCase = new UserUseCase(userRepository);
+const userController = new UserController(userUseCase);
+    
+io.on(ChatEnum.CONNECTION, (socket: IAuthSocket) => {
+    console.log(`Socket connected with ID: ${socket.id}`);
+  
+    // Handle sendMessage event
+    socket.on('sendMessage', (messageData: IMessage) => {
+      if (!messageData) {
+        console.error('No data received for sendMessage event');
+      }
+      userController.handleSendMessage(socket, messageData);
+
+      // Optionally, broadcast the message to other connected clients
+      socket.emit('receiveMessage', messageData);
+     console.log('Broadcasting message to other clients:', messageData); 
+    });
+
+    socket.on('fetchMessages',(chatId:string)=>{
+        if(!chatId){
+            console.log('not get Chat Id');
+        }
+      console.log(chatId,'chat Id');
+      userController.handleFetchMessages(socket,chatId)
+    })
+
+     
+  
+    socket.on('error', (err) => {
+      console.error('Socket error occurred:', err);
+    });
+        socket.join(socket.userId!)
         joinAndLeaveChat(socket,activeChat)
 
         socket.on(ChatEnum.DISCONNECT_EVENT, async () => {
@@ -94,11 +123,12 @@ export function ConnectSocket(httpServer: http.Server) {
 
 }
 
+// Manage user joining and leaving chats
 const joinAndLeaveChat = (socket: IAuthSocket, activeChat: Map<string, Set<string>>) => {
     socket.on(ChatEnum.JOIN_CHAT_EVENT, (chatId: string) => {
         socket.join(chatId);
 
-        if (socket.userId) {  
+        if (socket.userId) {
             if (activeChat.has(chatId)) {
                 activeChat.get(chatId)?.add(socket.userId);
             } else {
@@ -116,7 +146,7 @@ const joinAndLeaveChat = (socket: IAuthSocket, activeChat: Map<string, Set<strin
             if (userSet.size === 0) {
                 activeChat.delete(chatId);
             }
-        }        
+        }
     });
     
 };

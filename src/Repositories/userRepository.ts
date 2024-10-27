@@ -4,6 +4,8 @@ import IUsers from "../Entities/IUser"
 import Chats from "../Frameworks/Models/ChatModel"
 import Users from "../Frameworks/Models/usersModel"
 import { hashPassword } from "../Frameworks/Utils/hashedPassword"
+import { IMessage } from "../Entities/IMessage"
+import Messages from "../Frameworks/Models/MessageModel"
 
 export class UserRepository{
     async createUser(name: string, email: string, password: string, mobile: number): Promise<IUsers> {
@@ -95,13 +97,18 @@ export class UserRepository{
     }
 
     async createChat(senderId: string, receiverId: string, type: 'one-to-one' | 'group'): Promise<IChat> {
-        const newChat = new Chats({
+      const chatId = new mongoose.Types.ObjectId(); 
+  
+      const newChat = {
+          chatId: chatId,
           participants: [senderId, receiverId],
-          type,
-          createdAt: new Date()
-        });
-        return await newChat.save();
-      }
+          type: type,
+          createdAt: new Date(),
+      };
+  
+      const chat = new Chats(newChat); 
+      return await chat.save(); 
+  }
     
       async findOneByParticipants(senderId: string, receiverId: string): Promise<IChat | null> {
         return await Chats.findOne({
@@ -165,6 +172,21 @@ export class UserRepository{
         throw error; 
       }
     }
+
+  // Create a new message
+  async createMessage(messageData: IMessage): Promise<IMessage> {
+    const message = new Messages(messageData);
+    return await message.save();
+  }
+
+  // // Get messages by chatId
+  // async getMessagesByChatId(chatId: string): Promise<IMessage[]> {
+  //   return await Messages.find({ chatId }).sort({ createdAt: 1 });
+  // }
+
+  async getMessagesByChatId(chatId: string): Promise<IMessage[]> {
+    return await Messages.find({ chatId }).populate('chatId'); 
+}
     
   }
       
