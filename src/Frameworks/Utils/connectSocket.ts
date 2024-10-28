@@ -38,84 +38,89 @@ export function ConnectSocket(httpServer: http.Server) {
     io.use((socket: IAuthSocket, next) => {
         try {
             const rawCookie = socket.handshake.headers.cookie;
-            
+
             if (!rawCookie) {
                 console.error('No cookies found');
                 return next(new CustomError(HttpStatusCode.UNAUTHORIZED, 'No cookies found'));
             }
             const { Token } = parse(rawCookie);
-            
-            
+
+
             if (!Token) {
                 throw new CustomError(HttpStatusCode.UNAUTHORIZED, 'User is not authenticated: No token found.');
             }
-    
-            
+
+
             const decoded: IPayload = jwtService.verifyToken(Token);
-            
+
             if (!decoded || !isObjectIdOrHexString(decoded.userId)) {
                 console.error('Decoded token is invalid or ID is not a valid ObjectId');
                 throw new CustomError(HttpStatusCode.UNAUTHORIZED, 'User is not authenticated: Invalid token ID.');
             }
-            
-    
+
+
             socket.userId = decoded.userId;
             next();
         } catch (error: any) {
-            console.error('Socket authentication error:', error); 
+            console.error('Socket authentication error:', error);
             next(error);
         }
     });
 
     const userRepository = new UserRepository();
-const userUseCase = new UserUseCase(userRepository);
-const userController = new UserController(userUseCase);
-    
-io.on(ChatEnum.CONNECTION, (socket: IAuthSocket) => {
-    console.log(`Socket connected with ID: ${socket.id}`);
-  
-    // Handle sendMessage event
-    socket.on('sendMessage', (messageData: IMessage) => {
-      if (!messageData) {
-        console.error('No data received for sendMessage event');
-      }
-      userController.handleSendMessage(socket, messageData);
+    const userUseCase = new UserUseCase(userRepository);
+    const userController = new UserController(userUseCase);
 
-      // Optionally, broadcast the message to other connected clients
-      socket.emit('receiveMessage', messageData);
-     console.log('Broadcasting message to other clients:', messageData); 
-    });
+    io.on(ChatEnum.CONNECTION, (socket: IAuthSocket) => {
+        console.log(`Socket connected with ID: ${socket.id}`);
 
-    socket.on('fetchMessages',(chatId:string)=>{
-        if(!chatId){
-            console.log('not get Chat Id');
-        }
-      console.log(chatId,'chat Id');
-      userController.handleFetchMessages(socket,chatId)
-    })
+        socket.on('join-chat', (chatId) => {
+            socket.join(chatId);
+            console.log(`Socket ${socket.id} joined room ${chatId}`);
+        });
 
-     
-  
-    socket.on('error', (err) => {
-      console.error('Socket error occurred:', err);
-    });
+
+        // Handle sendMessage event
+        socket.on('sendMessage', async (messageData: IMessage) => {
+            if (!messageData) {
+                console.error('No data received for sendMessage event');
+            }
+            await userController.handleSendMessage(socket, messageData);
+
+            io.in(messageData.chatId).emit('receiveMessage', messageData);
+
+        });
+
+        socket.on('fetchMessages', (chatId: string) => {
+            if (!chatId) {
+                console.log('not get Chat Id');
+            }
+            userController.handleFetchMessages(socket, chatId)
+        })
+
+
+
+        socket.on('error', (err) => {
+            console.error('Socket error occurred:', err);
+        });
+        
         socket.join(socket.userId!)
-        joinAndLeaveChat(socket,activeChat)
+        joinAndLeaveChat(socket, activeChat)
 
         socket.on(ChatEnum.DISCONNECT_EVENT, async () => {
             console.log('socket Disconnected');
-            
+
         });
     })
 
     return {
-        emitSocketEvent:function<T>(roomId:string,event:string,payload:T){
-            io.in(roomId).emit(event,payload)
+        emitSocketEvent: function <T>(roomId: string, event: string, payload: T) {
+            io.in(roomId).emit(event, payload)
         },
         isReciverInChat(chatId: string, reciverId: string) {
-            const userJoined:Set<string>| undefined = activeChat.get(chatId);
+            const userJoined: Set<string> | undefined = activeChat.get(chatId);
 
-            if(!userJoined)return false
+            if (!userJoined) return false
 
             return userJoined.has(reciverId);
         }
@@ -139,7 +144,7 @@ const joinAndLeaveChat = (socket: IAuthSocket, activeChat: Map<string, Set<strin
 
     socket.on(ChatEnum.LEAVE_CHAT_EVENT, (chatId: string) => {
         socket.leave(chatId);
-        
+
         const userSet = activeChat.get(chatId);
         if (userSet) {
             userSet.delete(socket.userId!);
@@ -148,5 +153,5 @@ const joinAndLeaveChat = (socket: IAuthSocket, activeChat: Map<string, Set<strin
             }
         }
     });
-    
+
 };

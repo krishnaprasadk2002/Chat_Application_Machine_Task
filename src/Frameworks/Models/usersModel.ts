@@ -10,6 +10,7 @@ const UsersSchema: Schema = new Schema({
     status: { type: Boolean, default: false },
     refreshToken: { type: String },
     expiresAt: { type: Date },
+    selected:{ type: Boolean, default: false }
   },
   {
     timestamps: true,

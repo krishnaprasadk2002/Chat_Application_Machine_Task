@@ -10,6 +10,7 @@ export interface IUsers {
     imageUrl?:string;
     status:Boolean;
     refreshToken?:string,
+    selected?:boolean
   }
 
   export default IUsers

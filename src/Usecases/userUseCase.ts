@@ -1,7 +1,7 @@
 import { UserRepository } from "../Repositories/userRepository";
 import bcrypt from 'bcrypt';
 import { config } from "dotenv";
-import { IChatWithParticipants } from "../Entities/IChat";
+import { IChat, IChatWithParticipants } from "../Entities/IChat";
 import { IMessage } from "../Entities/IMessage";
 
 
@@ -63,6 +63,22 @@ export class UserUseCase {
         console.error('Error creating new chat:', error);
         throw new Error('Failed to create new chat'); 
     }
+}
+
+
+async createGroupChat(senderId: string, groupName: string, members: string[]): Promise<IChat> {
+  try {
+      // Call the service method to create a group chat
+      const groupChat = await this.userRep.createGroupChat(senderId, groupName, members);
+      return groupChat;
+  } catch (error) {
+      console.error('Error in createGroupChat use case:', error);
+      throw new Error('Failed to create group chat')
+  }
+}
+
+async getUserGroupChats(userId: string): Promise<IChat[]> {
+  return await this.userRep.getUserGroupChats(userId);
 }
 
 

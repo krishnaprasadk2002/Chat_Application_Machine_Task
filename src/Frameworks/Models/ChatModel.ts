@@ -12,7 +12,7 @@ const ChatSchema: Schema = new Schema(
         participants: [
             { 
                 type: Schema.Types.ObjectId, 
-                ref: "User", 
+                ref: "Users", 
                 required: true 
             }
         ],
@@ -39,7 +39,7 @@ const ChatSchema: Schema = new Schema(
         },
         groupAdmin: {
             type: Schema.Types.ObjectId,
-            ref: "User", 
+            ref: "Users", 
         },
         createdAt: { 
             type: Date,

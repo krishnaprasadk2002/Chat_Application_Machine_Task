@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { IChatWithParticipants } from "../Entities/IChat";
+import { IChat, IChatWithParticipants } from "../Entities/IChat";
 import IUsers from "../Entities/IUser";
 import { HttpStatusCode } from "../Enum/httpStatusCode";
 import { authenticatedRequest, authenticateToken } from "../Frameworks/Middlewares/accessToken";
@@ -125,12 +125,55 @@ async createNewChat(req: authenticatedRequest, res: Response): Promise<void> {
 }
 
 
+async createNewGroupChat(req: authenticatedRequest, res: Response): Promise<void> {
+  try {
+      const senderId: string | undefined = req.user?.userId;
+      const { groupName, members } = req.body; 
+
+      if (!senderId || !groupName || !members || members.length === 0) {
+          res.status(HttpStatusCode.BAD_REQUEST).json({
+              success: false,
+              message: "Sender ID, group name, or members are missing",
+          });
+          return; 
+      }
+
+      // Create a new group chat
+      const groupChat = await this.userUseCase.createGroupChat(senderId, groupName, members);
+
+      res.status(HttpStatusCode.OK).json({
+          success: true,
+          message: "Group chat created successfully",
+          data: groupChat,
+      });
+  } catch (error) {
+      console.error('Error creating new group chat:', error);
+      res.status(HttpStatusCode.INTERNAL_SERVER_ERROR).json({
+          success: false,
+          message: 'Server error',
+      });
+  }
+}
+
+async getUserGroupChats(req: authenticatedRequest, res: Response) {
+  const userId: string | undefined = req.user?.userId as string;
+  try {
+    const groupChats: IChat[] = await this.userUseCase.getUserGroupChats(userId);
+    res.status(200).json({ success: true, data: groupChats });
+  } catch (error) {
+    console.error('Error fetching group chats:', error);
+    res.status(500).json({ success: false, message: 'Error fetching group chats' });
+  }
+}
+
+
+
  // Send a message and broadcast it
  async handleSendMessage(socket: Socket, messageData: IMessage) {
   try {
-    console.log(messageData,'message');
       const message = await this.userUseCase.sendMessage(messageData);
-      socket.broadcast.to(message.chatId).emit('messageReceived', message);
+      console.log("To called",messageData.chatId);
+    //  socket.in(messageData.chatId).emit('receiveMessage', message);
   } catch (error) {
       console.error('Error sending message:', error);
   }

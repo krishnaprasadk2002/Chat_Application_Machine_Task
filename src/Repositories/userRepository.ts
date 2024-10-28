@@ -109,6 +109,28 @@ export class UserRepository{
       const chat = new Chats(newChat); 
       return await chat.save(); 
   }
+
+  async createGroupChat(senderId: string, groupName: string, members: string[]): Promise<IChat> {
+    const chatId = new mongoose.Types.ObjectId(); 
+  
+    const newChat = {
+        chatId: chatId,
+        participants: [senderId, ...members], 
+        type: 'group',
+        groupName: groupName, 
+        createdAt: new Date(),
+    };
+  
+    const chat = new Chats(newChat); 
+    return await chat.save(); 
+  }
+
+  async getUserGroupChats(userId: string): Promise<IChat[]> {
+    return await Chats.find({
+      type: 'group',
+      participants: userId
+    }).populate('participants'); 
+  }
     
       async findOneByParticipants(senderId: string, receiverId: string): Promise<IChat | null> {
         return await Chats.findOne({
