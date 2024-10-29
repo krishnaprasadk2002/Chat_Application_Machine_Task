@@ -99,6 +99,38 @@ export function ConnectSocket(httpServer: http.Server) {
         })
 
 
+          // Handle joining a group chat
+          socket.on(ChatEnum.JOIN_GROUP_CHAT_EVENT, (groupId: string) => {
+            socket.join(groupId);
+            console.log(`User ${socket.id} joined group chat ${groupId}`);
+        });
+
+        // Handle leaving a group chat
+        socket.on(ChatEnum.LEAVE_GROUP_CHAT_EVENT, (groupId: string) => {
+            socket.leave(groupId);
+            console.log(`User ${socket.id} left group chat ${groupId}`);
+        });
+
+        // Handle sending group messages
+        socket.on(ChatEnum.SEND_GROUP_MESSAGE_EVENT, async (messageData: IMessage) => {
+            console.log('GroupMessage received:', messageData);
+        
+            try {
+                // Save the message to the database
+                await userController.handleSendMessage(socket,messageData);
+                
+                
+                // Emit the message to all clients in the group
+                io.in(messageData.chatId).emit(ChatEnum.RECEIVE_GROUP_MESSAGE_EVENT, messageData);
+                console.log('emited grp message Success ful',messageData);
+                
+            } catch (error) {
+                console.error('Error handling group message:', error);
+            }
+        });
+        
+
+
 
         socket.on('error', (err) => {
             console.error('Socket error occurred:', err);

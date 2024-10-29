@@ -289,5 +289,11 @@ async receiverData(req: Request, res: Response): Promise<Response> {
   });
 }
 
+
+isAuth(req: Request, res: Response) {
+  res.status(HttpStatusCode.OK).json({ message: "Success" });
+}
+
+
   
 }

@@ -8,5 +8,9 @@ export const ChatEnum = Object.freeze({
     NEW_CHAT_EVENT: "newChat",
     MESSAGE_RECEIVED_EVENT: "messageReceived",
     MESSAGE_READ_EVENT: "messageRead",
-    FETCH_MESSAGES_EVENT: "fetchMessages" 
+    FETCH_MESSAGES_EVENT: "fetchMessages",
+    JOIN_GROUP_CHAT_EVENT: "joinGroupChat",
+    LEAVE_GROUP_CHAT_EVENT: "leaveGroupChat",
+    SEND_GROUP_MESSAGE_EVENT: "sendGroupMessage",
+    RECEIVE_GROUP_MESSAGE_EVENT: "receiveGroupMessage"
 });

@@ -26,6 +26,9 @@ userRoute.get('/receiverData', (req, res) => {userController.receiverData(req, r
 userRoute.post("/createnewchat", authenticateToken, (req, res) => userController.createNewChat(req, res));
 userRoute.post("/createnewgroupchat", authenticateToken, (req, res) => userController.createNewGroupChat(req, res));
 userRoute.get('/groups',authenticateToken, (req,res)=>userController.getUserGroupChats(req,res));
+userRoute.get('/isAuth', authenticateToken, (req, res) => {
+    userController.isAuth(req, res);
+  });
 
 
 
