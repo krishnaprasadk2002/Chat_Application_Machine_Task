@@ -15,6 +15,7 @@ const allowedOrgins = [
   process.env.FRONTEND_URL || 'http://localhost:4200'
 ]
 
+
 // Apply CORS configuration immediately after initializing the app
 app.use(cors({
   origin: allowedOrgins,
@@ -27,8 +28,8 @@ app.use(cookieParser())
 import userRoute from '../Routes/userRoute';
 
 // Parse incoming URL-encoded form data
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 
 app.use(morgan("dev"));

@@ -27,7 +27,7 @@ const MessageSchema: Schema = new Schema(
         },
         type: { 
             type: String, 
-            enum: ['text', 'image', 'video', 'document'],
+            enum: ['text' ,'image' , 'video' , 'audio' , 'document'],
             required: true
         },
         isRead: { 

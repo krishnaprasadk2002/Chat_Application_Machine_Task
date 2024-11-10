@@ -38,7 +38,7 @@ export interface IMessageCredentials {
         key: string,
         url: string
     };
-    type: "text" | "image" | "video" | "document";
+    type:  'text' |'image' | 'video' | 'audio' | 'document';
     isRead: boolean;
     createdAt: Date;
 }

@@ -209,6 +209,36 @@ export class UserRepository{
   async getMessagesByChatId(chatId: string): Promise<IMessage[]> {
     return await Messages.find({ chatId }).populate('chatId'); 
 }
+
+async getUserData(userId: string): Promise<IUsers> {
+  try {
+    const user = await Users.findById(userId);
+    if (!user) throw new Error('User not found');
+    return user;
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    throw error;
+  }
+}
+
+async getUserById(userId: string): Promise<IUsers | null> {
+  try {
+    const user = await Users.findById(userId).exec();
+    if (!user) {
+      console.error(`User with ID ${userId} not found`);
+      return null; 
+    }
+    return user;
+  } catch (error:any) {
+    console.error(`Error fetching user by ID ${userId}:`, error.message); 
+    throw new Error(`Error fetching user by ID: ${error.message}`); 
+  }
+}
+
+async updateUserProfile(userId: string, updatedProfile: any) {
+  return Users.findByIdAndUpdate(userId, updatedProfile, { new: true });
+}
+
     
   }
       

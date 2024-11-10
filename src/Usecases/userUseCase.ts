@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { config } from "dotenv";
 import { IChat, IChatWithParticipants } from "../Entities/IChat";
 import { IMessage } from "../Entities/IMessage";
+import IUsers from "../Entities/IUser";
 
 
 config();
@@ -110,5 +111,17 @@ async receiverData(receiverId:string){
   async fetchMessages(chatId: string): Promise<IMessage[]> {
     return await this.userRep.getMessagesByChatId(chatId);
   }
+
+  async getUserData(userId:string):Promise<IUsers>{
+    return await this.userRep.getUserData(userId)
+  }
+
+  async getUserProfile(userId: string) {
+    return await this.userRep.getUserById(userId);
+  }
+
+  async updateUserProfile(userId: string, updatedProfile: any) {
+    return this.userRep.updateUserProfile(userId, updatedProfile);
+}
 
 }
